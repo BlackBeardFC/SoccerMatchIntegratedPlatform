@@ -1,8 +1,9 @@
 package com.club.soccer.domain
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.ColumnTransformer
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
@@ -18,14 +19,12 @@ class Payment(
     var reservation: Reservation,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "payment_status")
-    @Type(value = PostgreSQLEnumType::class)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false)
+    @ColumnTransformer(read = "status::text", write = "?::payment_status")
     var status: PaymentStatus = PaymentStatus.PENDING,
 
-    @Column
-    var method: String? = null,              // 예: KAKAO_PAY, CARD 등 (자유 텍스트)
-
-    @Column
+    var method: String? = null,
     var amount: Long? = null,
 
     @Column(name = "paid_at")

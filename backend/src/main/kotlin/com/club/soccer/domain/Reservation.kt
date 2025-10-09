@@ -1,8 +1,9 @@
 package com.club.soccer.domain
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.ColumnTransformer
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
@@ -21,9 +22,12 @@ class Reservation(
     @JoinColumn(name = "match_id", nullable = false)
     var match: Match,
 
+    // Hibernate 쪽엔 "문자열"로 전달 (VARCHAR)
+    // 읽을 때는 status::text 로 받고, 쓸 때는 ?::reservation_status 로 캐스팅
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "reservation_status")
-    @Type(value = PostgreSQLEnumType::class)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false)
+    @ColumnTransformer(read = "status::text", write = "?::reservation_status")
     var status: ReservationStatus = ReservationStatus.PENDING,
 
     @Column(name = "hold_expires_at")
@@ -38,7 +42,6 @@ class Reservation(
     @Column(name = "updated_at", insertable = false, updatable = false)
     override var updatedAt: OffsetDateTime? = null,
 
-    // 예매 항목(좌석별)
     @OneToMany(mappedBy = "reservation", cascade = [CascadeType.ALL], orphanRemoval = true)
     var items: MutableList<ReservationItem> = mutableListOf()
 ) : Auditable

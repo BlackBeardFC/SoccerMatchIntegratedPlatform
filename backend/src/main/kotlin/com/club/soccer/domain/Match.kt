@@ -1,8 +1,9 @@
 package com.club.soccer.domain
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.annotations.ColumnTransformer
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
@@ -29,8 +30,9 @@ class Match(
     var startAt: OffsetDateTime,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "match_status")
-    @Type(PostgreSQLEnumType::class)  // PostgreSQL ENUM 매핑
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false)
+    @ColumnTransformer(read = "status::text", write = "?::match_status")
     var status: MatchStatus = MatchStatus.SCHEDULED,
 
     @Column(name = "home_score", nullable = false)

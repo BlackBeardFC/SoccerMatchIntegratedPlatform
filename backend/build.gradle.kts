@@ -30,7 +30,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
-	implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
+	//implementation("com.vladmihalcea:hibernate-types-60:2.21.1")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -54,4 +54,7 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+springBoot {
+	mainClass.set("com.club.soccer.backend.BackendApplicationKt")
 }
