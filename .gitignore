@@ -1,25 +1,16 @@
-﻿# OS
+# === Node/Expo ===
+app/node_modules/
+app/.expo/
+app/dist/
+app/.env
+
+# === Gradle/IntelliJ ===
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.idea/
+backend/*.iml
+
+# OS
 .DS_Store
 Thumbs.db
-
-
-# IDE
-.idea/
-*.iml
-.vscode/
-
-
-# Gradle
-.gradle/
-build/
-**/out/
-!gradle/wrapper/gradle-wrapper.jar
-
-
-# Node (모바일/웹 프런트 대비)
-node_modules/
-
-
-# Env
-.env
-.env.*
