@@ -45,19 +45,19 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE TRIGGER trg_teams_updated BEFORE UPDATE ON teams
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE TABLE IF NOT EXISTS players (
-    player_id  BIGSERIAL PRIMARY KEY,
-    team_id    BIGINT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
-    name       TEXT NOT NULL,
-    position   TEXT,
-    number     INT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (team_id, number)
-);
-CREATE INDEX IF NOT EXISTS idx_players_team ON players(team_id);
-CREATE TRIGGER trg_players_updated BEFORE UPDATE ON players
-FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+--CREATE TABLE IF NOT EXISTS players (
+--    player_id  BIGSERIAL PRIMARY KEY,
+--    team_id    BIGINT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
+--    name       TEXT NOT NULL,
+--    position   TEXT,
+--    number     INT,
+--    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--    UNIQUE (team_id, number)
+--);
+--CREATE INDEX IF NOT EXISTS idx_players_team ON players(team_id);
+--CREATE TRIGGER trg_players_updated BEFORE UPDATE ON players
+--FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- 경기장/구역/좌석
 CREATE TABLE IF NOT EXISTS stadiums (
@@ -184,3 +184,36 @@ FROM matches m
 JOIN stadiums st ON st.stadium_id = m.stadium_id
 JOIN sections sec ON sec.stadium_id = st.stadium_id
 JOIN seats s ON s.section_id = sec.section_id;
+
+CREATE TABLE IF NOT EXISTS players (
+    player_id BIGSERIAL PRIMARY KEY,
+    team_id BIGINT NOT NULL REFERENCES teams(team_id) ON DELETE CASCADE,
+    name VARCHAR(50) NOT NULL,
+    position VARCHAR(10) NOT NULL,
+    back_number INT NOT NULL,
+    age INT NOT NULL,
+    height INT NOT NULL,
+    weight INT NOT NULL,
+    nationality VARCHAR(30) NOT NULL,
+    preferred_foot VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE players
+    ADD CONSTRAINT uq_players_team_back_number
+    UNIQUE (team_id, back_number);
+
+CREATE TABLE IF NOT EXISTS external_players (
+    external_player_id BIGSERIAL PRIMARY KEY,
+    source_player_id BIGINT,
+    name VARCHAR(100) NOT NULL,
+    position VARCHAR(20),
+    age INT,
+    height INT,
+    weight INT,
+    nationality VARCHAR(50),
+    source_team VARCHAR(100),
+    source_league VARCHAR(50),
+    detail_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

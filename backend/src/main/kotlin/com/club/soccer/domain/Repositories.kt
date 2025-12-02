@@ -14,9 +14,9 @@ interface MemberRepository : JpaRepository<Member, Long> {
 
 interface TeamRepository : JpaRepository<Team, Long>
 
-interface PlayerRepository : JpaRepository<Player, Long> {
-    fun findByTeamId(teamId: Long): List<Player>
-}
+//interface PlayerRepository : JpaRepository<Player, Long> {
+//    fun findByTeamId(teamId: Long): List<Player>
+//}
 
 interface StadiumRepository : JpaRepository<Stadium, Long>
 
