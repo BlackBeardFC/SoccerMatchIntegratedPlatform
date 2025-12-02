@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
-
+import { Stack } from "expo-router";
+import { AuthProvider } from "../../contexts/AuthContext";
 
 export default function tabsLayout() {
   return (

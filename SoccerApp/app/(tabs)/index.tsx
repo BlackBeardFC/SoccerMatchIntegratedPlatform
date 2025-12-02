@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Colors from "../../constants/Colors";
@@ -6,16 +6,14 @@ import { useAuth } from "../../contexts/AuthContext";
 
 export default function tabsindex() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthed } = useAuth();
 
-  const isLoggedIn = !!user;
+  const isLoggedIn = isAuthed;
 
   const displayName =
-    (user as any)?.nickname ??
-    (user as any)?.name ??
-    (user as any)?.username ??
-    (user as any)?.email ??
-    "";
+    user?.nickname ??
+    user?.name ??
+    (user?.email ? user.email.split("@")[0] : "") ?? "";
 
   const recommended = [
     { id: 1, title: "검은수염 vs 라쿤", date: "11월 27일 19:00", stadium: "검은수염 스타디움" },
@@ -29,13 +27,30 @@ export default function tabsindex() {
   ];
 
   const menus = [
-    { id: 1, icon: "ticket-outline", label: "예매 내역", route: "/mypage-pages/orders" },
-    { id: 2, icon: "trophy-outline", label: "순위", route: "/(tabs)/rank" },
-    { id: 3, icon: "football-outline", label: "구단", route: "/(tabs)/club" },
-    { id: 4, icon: "heart-outline", label: "응원 구단", route: "/mypage-pages/support" },
-    { id: 5, icon: "chatbubble-ellipses-outline", label: "문의", route: "/mypage-pages/contact" },
-    { id: 6, icon: "person-outline", label: "마이페이지", route: "/(tabs)/mypage" },
+    { id: 1, icon: "ticket-outline", label: "예매 내역", route: "/mypage-pages/orders",  needAuth: true },
+    { id: 2, icon: "trophy-outline", label: "순위",       route: "/(tabs)/rank",          needAuth: false },
+    { id: 3, icon: "football-outline", label: "구단",     route: "/(tabs)/club",          needAuth: false },
+    { id: 4, icon: "heart-outline", label: "응원 구단",   route: "/mypage-pages/support", needAuth: true },
+    { id: 5, icon: "chatbubble-ellipses-outline", label: "문의", route: "/mypage-pages/contact", needAuth: true },
+    { id: 6, icon: "person-outline", label: "마이페이지", route: "/(tabs)/mypage",        needAuth: false },
   ];
+
+  const handleMenuPress = (m: (typeof menus)[number]) => {
+    if (m.needAuth && !isLoggedIn) {
+      Alert.alert(
+        "로그인이 필요합니다",
+        "이 기능은 로그인 후 이용할 수 있습니다.",
+        [
+          { text: "취소", style: "cancel" },
+          { text: "로그인", onPress: () => router.push("/auth/login") },
+        ]
+      );
+      return;
+    }
+
+    if (!m.route) return;
+    router.push(m.route as any);
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -136,10 +151,7 @@ export default function tabsindex() {
             key={m.id}
             style={styles.menuButton}
             activeOpacity={0.7}
-            onPress={() => {
-              if (!m.route) return;
-              router.push(m.route as any);
-            }}
+            onPress={() => handleMenuPress(m)}
           >
             <Ionicons name={m.icon as any} size={28} color="#fff" />
             <Text style={styles.menuLabel}>{m.label}</Text>

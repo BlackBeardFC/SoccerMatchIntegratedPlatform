@@ -19,6 +19,7 @@ export default function RegisterScreen() {
   const { register, login } = useAuth();
 
   const [name, setName] = useState("");
+  const [nickname, setNickname] = useState(""); // 🔹 닉네임 추가
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
@@ -30,6 +31,7 @@ export default function RegisterScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
   const nameRef   = useRef<TextInput>(null);
+  const nicknameRef = useRef<TextInput>(null); // 🔹 닉네임 ref
   const emailRef  = useRef<TextInput>(null);
   const phoneRef  = useRef<TextInput>(null);
   const pwRef     = useRef<TextInput>(null);
@@ -48,6 +50,8 @@ export default function RegisterScreen() {
 
   const validate = () => {
     if (!name.trim()) return "이름을 입력하세요.";
+    if (!nickname.trim()) return "닉네임을 입력하세요.";           // 🔹 닉네임 검사
+    if (nickname.trim().length < 2) return "닉네임은 2자 이상이어야 합니다.";
     if (!email.trim()) return "이메일을 입력하세요.";
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) return "이메일 형식이 올바르지 않습니다.";
     if (!phone.trim()) return "핸드폰 번호를 입력하세요.";
@@ -64,7 +68,10 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       if (typeof register === "function") {
-        await register(name.trim(), email.trim(), pw);
+        // 🔹 당장은 기존대로 3개만 보냄 (name, email, pw)
+        // 닉네임은 나중에 백엔드 붙일 때 같이 보내면 됨
+        await register( name.trim(), email.trim(), pw, nickname.trim(), phone.trim()
+);
       } else if (typeof login === "function") {
         await login(email.trim(), pw);
       }
@@ -124,6 +131,7 @@ export default function RegisterScreen() {
               )}
 
               <View style={styles.form}>
+                {/* 이름 */}
                 <Text style={styles.label}>이름</Text>
                 <TextInput
                   ref={nameRef}
@@ -134,9 +142,25 @@ export default function RegisterScreen() {
                   placeholderTextColor="#8b8b8b"
                   returnKeyType="next"
                   onFocus={onFieldFocus(nameRef)}
-                  onSubmitEditing={() => emailRef.current?.focus()}
+                  onSubmitEditing={() => nicknameRef.current?.focus()} // 🔹 다음: 닉네임
                 />
 
+                {/* 닉네임 */}
+                <Text style={[styles.label, { marginTop: 14 }]}>닉네임</Text>
+                <TextInput
+                  ref={nicknameRef}
+                  style={styles.input}
+                  value={nickname}
+                  onChangeText={setNickname}
+                  placeholder="경기장에서 보여질 이름"
+                  placeholderTextColor="#8b8b8b"
+                  returnKeyType="next"
+                  autoCapitalize="none"
+                  onFocus={onFieldFocus(nicknameRef)}
+                  onSubmitEditing={() => emailRef.current?.focus()} // 🔹 다음: 이메일
+                />
+
+                {/* 이메일 */}
                 <Text style={[styles.label, { marginTop: 14 }]}>이메일</Text>
                 <TextInput
                   ref={emailRef}
@@ -152,6 +176,7 @@ export default function RegisterScreen() {
                   onSubmitEditing={() => phoneRef.current?.focus()}
                 />
 
+                {/* 핸드폰 번호 */}
                 <Text style={[styles.label, { marginTop: 14 }]}>핸드폰 번호</Text>
                 <TextInput
                   ref={phoneRef}
@@ -167,6 +192,7 @@ export default function RegisterScreen() {
                   onSubmitEditing={() => pwRef.current?.focus()}
                 />
 
+                {/* 비밀번호 */}
                 <Text style={[styles.label, { marginTop: 14 }]}>비밀번호</Text>
                 <View style={styles.pwRow}>
                   <TextInput
@@ -190,6 +216,7 @@ export default function RegisterScreen() {
                   </Pressable>
                 </View>
 
+                {/* 비밀번호 확인 */}
                 <Text style={[styles.label, { marginTop: 14 }]}>비밀번호 확인</Text>
                 <View style={styles.pwRow}>
                   <TextInput
@@ -212,6 +239,7 @@ export default function RegisterScreen() {
                   </Pressable>
                 </View>
 
+                {/* 회원가입 버튼 */}
                 <TouchableOpacity
                   style={[styles.submitBtn, loading && { opacity: 0.5 }]}
                   disabled={loading}
@@ -220,6 +248,7 @@ export default function RegisterScreen() {
                   {loading ? <ActivityIndicator /> : <Text style={styles.submitBtnText}>회원가입</Text>}
                 </TouchableOpacity>
 
+                {/* 로그인으로 이동 */}
                 <Pressable style={styles.helperRow} onPress={() => router.push("/auth/login")}>
                   <Text style={styles.helperText}>이미 계정이 있나요? </Text>
                   <Text style={[styles.helperText, { color: Colors.primary, fontWeight: "800" }]}>

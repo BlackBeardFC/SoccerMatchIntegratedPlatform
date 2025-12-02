@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import type { Href } from "expo-router";    
@@ -8,10 +8,9 @@ import { useAuth } from "../../contexts/AuthContext";
 
 export default function tabsMyPage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthed } = useAuth();
 
-  const isAuthed = !!user;
-  const displayName = user?.name || user?.email?.split("@")[0] || "회원";
+  const displayName = user?.nickname || user?.name || user?.email?.split("@")[0] || "회원";
 
   const goProtected = (path: Href) => {
     if (!isAuthed) {
@@ -49,7 +48,18 @@ export default function tabsMyPage() {
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
-        <View style={styles.profileCircle} />
+        <View style={styles.profileImageWrapper}>
+          {user?.profileImageUri ? (
+            <Image
+              source={{ uri: user.profileImageUri }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.profileEmptyCircle}>
+              <Ionicons name="person" size={40} color="#555" />
+            </View>
+          )}
+        </View>
         <View style={styles.profileRight}>
           {!isAuthed ? (
             <TouchableOpacity
@@ -66,7 +76,7 @@ export default function tabsMyPage() {
           <View style={styles.infoRow}>
             <TouchableOpacity
               style={styles.infoBtn}
-              onPress={() => router.push("/mypage-pages/profile")}
+              onPress={() => goProtected("/mypage-pages/profile" as Href)}
             >
               <Text style={styles.infoBtnText}>내 정보</Text>
             </TouchableOpacity>
@@ -88,7 +98,7 @@ export default function tabsMyPage() {
       <View style={styles.menuContainer}>
         <TouchableOpacity
           style={styles.menuButton}
-          onPress={() => router.push("/mypage-pages/orders")}
+          onPress={() => goProtected("/mypage-pages/orders" as Href)}
         >
           <Text style={styles.menuText}>예매 내역</Text>
           <Ionicons name="chevron-forward" size={20} color="#fff" />
@@ -96,8 +106,8 @@ export default function tabsMyPage() {
 
         <TouchableOpacity
           style={styles.menuButton}
-          // onPress={() => goProtected("/mypage-pages/notifications")}
-          onPress={() => router.push("/mypage-pages/notifications")}
+          onPress={() => goProtected("/mypage-pages/notifications")}
+          // onPress={() => router.push("/mypage-pages/notifications")}
         >
           <Text style={styles.menuText}>알림</Text>
           <Ionicons name="chevron-forward" size={20} color="#fff" />
@@ -105,8 +115,8 @@ export default function tabsMyPage() {
 
         <TouchableOpacity
           style={styles.menuButton}
-          // onPress={() => goProtected("/mypage-pages/support")}
-          onPress={() => router.push("/mypage-pages/support")}
+          onPress={() => goProtected("/mypage-pages/support")}
+          // onPress={() => router.push("/mypage-pages/support")}
         >
           <Text style={styles.menuText}>응원 구단</Text>
           <Ionicons name="chevron-forward" size={20} color="#fff" />
@@ -114,7 +124,8 @@ export default function tabsMyPage() {
 
         <TouchableOpacity
           style={styles.menuButton}
-          onPress={() => router.push("/mypage-pages/contact" as Href)}
+          onPress={() => goProtected("/mypage-pages/contact" as Href)}
+          // onPress={() => router.push("/mypage-pages/contact" as Href)}
         >
           <Text style={styles.menuText}>문의사항</Text>
           <Ionicons name="chevron-forward" size={20} color="#fff" />
@@ -133,7 +144,9 @@ export default function tabsMyPage() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000", alignItems: "center", paddingTop: 40 },
   profileContainer: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", marginLeft: 30, marginBottom: 10 },
-  profileCircle: { width: 90, height: 90, borderRadius: 45, backgroundColor: "#d9d9d9", marginRight: 15 },
+  profileImageWrapper: { width: 90, height: 90, borderRadius: 45, overflow: "hidden", backgroundColor: "#d9d9d9", marginRight: 15 },
+  profileImage: { width: "100%", height: "100%" },
+  profileEmptyCircle: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#d9d9d9" },
   profileRight: { flexDirection: "column", justifyContent: "center" },
 
   loginButton: { backgroundColor: Colors.primary, paddingVertical: 10, paddingHorizontal: 25, borderRadius: 8, alignSelf: "flex-start" },
