@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+
+import InquirySearchBar, { CategoryType, StatusFilterType } from "./search";
+import AnswerModal from "./answer";
+import DeleteConfirmModal from "./delete";
 
 type InquiryStatus = "답변대기" | "답변완료";
 
@@ -13,7 +16,7 @@ type Inquiry = {
   content: string;
 };
 
-const INQUIRIES: Inquiry[] = [
+const INITIAL_INQUIRIES: Inquiry[] = [
   {
     id: "1",
     status: "답변대기",
@@ -51,158 +54,138 @@ const INQUIRIES: Inquiry[] = [
   },
 ];
 
-// 🔹 문의 카테고리
-const CATEGORIES = [
-  "전체",
-  "예매",
-  "결제",
-  "환불",
-  "계정",
-  "기술지원",
-  "기타문의",
-] as const;
-type CategoryType = (typeof CATEGORIES)[number];
-
 export default function InquiriesScreen() {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("전체");
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("전체");
+  const [statusFilter, setStatusFilter] = useState<StatusFilterType>("전체");
 
-  // 지금은 실제 필터링 없이 UI만
-  const filteredInquiries = INQUIRIES;
+  // 🔹 문의 목록을 state로 관리
+  const [inquiries, setInquiries] = useState<Inquiry[]>(INITIAL_INQUIRIES);
+
+  // 🔹 답변 모달 상태
+  const [answerModalVisible, setAnswerModalVisible] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+
+  // 삭제용 모달 상태
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Inquiry | null>(null);
+
+  // 🔍 실제 필터링 로직은 나중에 여기서 구현
+  const filteredInquiries = inquiries;
+
+  const handleOpenAnswerModal = (item: Inquiry) => {
+    setSelectedInquiry(item);
+    setAnswerModalVisible(true);
+  };
+
+  const handleSubmitAnswer = (answerText: string) => {
+    if (!selectedInquiry) return;
+
+    console.log("➡️ 서버로 보낼 답변:", {
+      inquiryId: selectedInquiry.id,
+      answer: answerText,
+    });
+
+    // 일단 프론트에서만 상태를 '답변완료'로 바꿔줌
+    setInquiries((prev) =>
+      prev.map((q) =>
+        q.id === selectedInquiry.id ? { ...q, status: "답변완료" } : q
+      )
+    );
+
+    setAnswerModalVisible(false);
+    setSelectedInquiry(null);
+  };
 
   const renderItem = ({ item, index }: { item: Inquiry; index: number }) => {
-  const isAnswered = item.status === "답변완료";
+    const isAnswered = item.status === "답변완료";
 
-  return (
-    <View style={styles.card}>
-      {/* ⬇️ 카드 전체를 좌우로 나눈다 */}
-      <View style={styles.cardMainRow}>
-        {/* 왼쪽: 상태/날짜/제목/내용 */}
-        <View style={styles.cardTextArea}>
-          {/* 위 한 줄 : 상태 배지 + 날짜 */}
-          <View style={styles.cardTopRow}>
-            <View
-              style={[
-                styles.statusBadge,
-                isAnswered ? styles.statusBadgeDone : styles.statusBadgePending,
-              ]}
-            >
-              <Text
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardMainRow}>
+          {/* 왼쪽 텍스트 영역 */}
+          <View style={styles.cardTextArea}>
+            <View style={styles.cardTopRow}>
+              <View
                 style={[
-                  styles.statusText,
-                  isAnswered ? styles.statusTextDone : styles.statusTextPending,
+                  styles.statusBadge,
+                  isAnswered ? styles.statusBadgeDone : styles.statusBadgePending,
                 ]}
               >
-                {item.status}
-              </Text>
+                <Text
+                  style={[
+                    styles.statusText,
+                    isAnswered ? styles.statusTextDone : styles.statusTextPending,
+                  ]}
+                >
+                  {item.status}
+                </Text>
+              </View>
+
+              <Text style={styles.dateText}>{item.date}</Text>
             </View>
 
-            <Text style={styles.dateText}>{item.date}</Text>
+            <Text style={styles.titleText}>{item.title}</Text>
+            <Text style={styles.contentText}>{item.content}</Text>
           </View>
 
-          {/* 제목 + 내용 프리뷰 */}
-          <Text style={styles.titleText}>{item.title}</Text>
-          <Text style={styles.contentText}>{item.content}</Text>
-        </View>
+          {/* 오른쪽 버튼 */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.deleteButton}
+            onPress={() => handleAskDelete(item)} >
+              <Text style={styles.deleteButtonText}>삭제</Text>
+            </TouchableOpacity>
 
-        {/* 오른쪽: 버튼 세로 배치 */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.answerButton}>
-            <Text style={styles.answerButtonText}>답변</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>
-              {index === INQUIRIES.length - 1 ? "확인" : "삭제"}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.answerButton}
+              onPress={() => handleOpenAnswerModal(item)}  // 🔹 여기서 모달 오픈
+            >
+              <Text style={styles.answerButtonText}>답변</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
+
+  const handleAskDelete = (item: Inquiry) => {
+  setDeleteTarget(item);
+  setDeleteModalVisible(true);
 };
 
-  const toggleCategory = () => setCategoryOpen((prev) => !prev);
+const handleConfirmDelete = () => {
+  if (!deleteTarget) return;
 
-  const handleSelectCategory = (cat: CategoryType) => {
-    setSelectedCategory(cat);
-    setCategoryOpen(false);
-  };
+  setInquiries((prev) => prev.filter((q) => q.id !== deleteTarget.id));
+
+  // 만약 답변 모달이 그 문의를 보고 있었다면 닫기
+  if (selectedInquiry && selectedInquiry.id === deleteTarget.id) {
+    setSelectedInquiry(null);
+    setAnswerModalVisible(false);
+  }
+
+  setDeleteModalVisible(false);
+  setDeleteTarget(null);
+};
+
+const handleCancelDelete = () => {
+  setDeleteModalVisible(false);
+  setDeleteTarget(null);
+};
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* 🔍 검색 + 버튼 */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color="#9CA3AF"
-              style={{ marginRight: 6 }}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="문의 제목이나 내용으로 검색"
-              placeholderTextColor="#9CA3AF"
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
-          <TouchableOpacity style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>검색</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 📂 카테고리 드롭다운 버튼 */}
-        <View style={styles.categoryWrapper}>
-          <TouchableOpacity
-            style={styles.categoryButton}
-            activeOpacity={0.8}
-            onPress={toggleCategory}
-          >
-            <Text style={styles.categoryButtonText}>
-              {selectedCategory === "전체"
-                ? "카테고리 선택 "
-                : selectedCategory}
-            </Text>
-            <Ionicons
-              name={categoryOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color="#2563EB"
-            />
-          </TouchableOpacity>
-
-          {/* 드롭다운 목록 */}
-          {categoryOpen && (
-            <View style={styles.categoryList}>
-              {CATEGORIES.map((cat) => {
-                const isSelected = cat === selectedCategory;
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[
-                      styles.categoryItem,
-                      isSelected && styles.categoryItemSelected,
-                    ]}
-                    onPress={() => handleSelectCategory(cat)}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryItemText,
-                        isSelected && styles.categoryItemTextSelected,
-                      ]}
-                    >
-                      {cat === "전체" ? "전체 카테고리" : cat}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        {/* 🔍 검색 / 카테고리 컴포넌트 */}
+        <InquirySearchBar
+          search={search}
+          onChangeSearch={setSearch}
+          selectedCategory={selectedCategory}
+          onChangeCategory={setSelectedCategory}
+          statusFilter={statusFilter}
+          onChangeStatusFilter={setStatusFilter}
+        />
 
         {/* 문의 리스트 */}
         <FlatList
@@ -211,6 +194,30 @@ export default function InquiriesScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+        />
+
+        {/* 🔹 답변 작성 모달 */}
+        <AnswerModal
+          visible={answerModalVisible}
+          onClose={() => {
+            setAnswerModalVisible(false);
+            setSelectedInquiry(null);
+          }}
+          inquiryTitle={selectedInquiry?.title ?? ""}
+          inquiryContent={selectedInquiry?.content ?? ""}
+          onSubmit={handleSubmitAnswer}
+        />
+
+        <DeleteConfirmModal
+          visible={deleteModalVisible}
+          title="문의 삭제"
+          message={
+            deleteTarget
+              ? `"${deleteTarget.title}" 문의를 삭제하시겠습니까?`
+              : "이 문의를 삭제하시겠습니까?"
+          }
+          onCancel={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
         />
       </View>
     </SafeAreaView>
@@ -231,99 +238,17 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
 
-  // 🔍 검색
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  searchBox: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-  },
-  searchButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: "#2563EB",
-  },
-  searchButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  // 📂 카테고리 드롭다운
-  categoryWrapper: {
-    marginBottom: 15,
-    alignItems: "flex-end",
-  },
-  categoryButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  categoryButtonText: {
-    fontSize: 13,
-    color: "#4B5563",
-  },
-  categoryList: {
-    marginTop: 6,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  categoryItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  categoryItemSelected: {
-    backgroundColor: "#EFF6FF",
-  },
-  categoryItemText: {
-    fontSize: 13,
-    color: "#4B5563",
-  },
-  categoryItemTextSelected: {
-    color: "#2563EB",
-    fontWeight: "600",
-  },
-
-  // 카드
+  // 카드 스타일
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   cardMainRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "flex-end",
   },
   cardTextArea: {
     flex: 1,
@@ -356,43 +281,34 @@ const styles = StyleSheet.create({
   statusTextDone: {
     color: "#16A34A",
   },
-
   dateText: {
     marginLeft: 4,
     fontSize: 12,
     color: "#9CA3AF",
   },
-
   titleText: {
     fontSize: 15,
     fontWeight: "700",
     color: "#111827",
     marginBottom: 4,
   },
-
   contentText: {
     fontSize: 13,
     color: "#6B7280",
   },
 
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  // 버튼
   actionButtons: {
-    flexDirection: "column",  
-    alignItems: "flex-end", 
-    justifyContent: "flex-start",
-    rowGap: 6,  
-    marginTop: 5, 
-  },  
-
+    flexDirection: "row",     // ⬅ 좌우 배치
+    alignItems: "center",
+    justifyContent: "flex-end",
+    columnGap: 8,             // 버튼 간 간격
+    marginTop: 5,
+  },
   answerButton: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
-    borderColor: "#5182ecff",
     backgroundColor: "#d9e5ffff",
   },
   answerButtonText: {
@@ -404,7 +320,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
-    borderColor: "#F97373",
     backgroundColor: "#FEE2E2",
   },
   deleteButtonText: {

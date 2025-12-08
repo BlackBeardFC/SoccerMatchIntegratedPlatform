@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Keyboard,
-} from "react-native";
+import { Modal, View, Text, StyleSheet, TouchableOpacity, TextInput, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 export type AdminDetailData = {
