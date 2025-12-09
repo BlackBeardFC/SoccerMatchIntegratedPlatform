@@ -40,7 +40,7 @@ export default function InquirySearchBar({
 
   return (
     <View>
-      {/* 🔍 검색 */}
+      {/* 검색 */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
           <Ionicons
@@ -62,9 +62,9 @@ export default function InquirySearchBar({
         </TouchableOpacity>
       </View>
 
-      {/* 🔽 카테고리 + 상태 선택 (가로 정렬) */}
+      {/* 카테고리 + 상태 선택 (가로 정렬) */}
       <View style={styles.rowWrapper}>
-        {/* 📂 카테고리 */}
+        {/* 카테고리 */}
         <View style={styles.filterBox}>
           <TouchableOpacity
             style={styles.categoryButton}
@@ -114,7 +114,7 @@ export default function InquirySearchBar({
           )}
         </View>
 
-        {/* 🟩 상태 선택 */}
+        {/* 상태 선택 */}
         <View style={styles.filterBox}>
           <TouchableOpacity
             style={styles.categoryButton}
@@ -169,7 +169,7 @@ export default function InquirySearchBar({
 }
 
 const styles = StyleSheet.create({
-  // 🔍 검색 스타일
+  // 검색 스타일
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // 🔽 필터 가로 정렬
+  // 필터 가로 정렬
   rowWrapper: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   filterBox: {
     flex: 1,
     marginHorizontal: 4,
-    position: "relative",   // ⬅️ 이걸 기준으로 드롭다운 절대 위치
+    position: "relative"
   },
 
   // 공통 버튼 UI
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   // 오버레이 드롭다운
   categoryList: {
     position: "absolute",
-    top: 44,                 // 버튼 아래로 살짝 띄워서
+    top: 44,
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    zIndex: 20,              // 리스트 위에 겹치도록
+    zIndex: 20, 
   },
   categoryItem: {
     paddingHorizontal: 16,

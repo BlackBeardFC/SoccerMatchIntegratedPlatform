@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 type Props = {
   visible: boolean;
