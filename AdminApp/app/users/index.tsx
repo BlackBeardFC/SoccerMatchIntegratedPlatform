@@ -1,11 +1,18 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import UserDetailModal, { UserDetail } from "../users/userDetail";
-
-const FILTERS = ["최신 등록순", "오래된 순", "최근 구매순"] as const;
-type FilterType = (typeof FILTERS)[number];
+import UserSearchHeader, {
+  SortType,
+  StatusFilterType,
+} from "./search";
 
 type User = UserDetail;
 
@@ -58,13 +65,66 @@ const MOCK_USERS: User[] = [
 
 export default function UsersScreen() {
   const [search, setSearch] = useState("");
-  const [selectedFilter, setSelectedFilter] =
-    useState<FilterType>("최신 등록순");
+
+  // 정렬/상태 드롭다운
+  const [selectedSort, setSelectedSort] =
+    useState<SortType>("기본 정렬");
+  const [selectedStatus, setSelectedStatus] =
+    useState<StatusFilterType>("전체");
+
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
 
-  const filteredUsers = MOCK_USERS; // TODO: 검색/필터 로직 나중에
+  const parseDate = (value: string) => {
+    const normalized = value.replace(/\./g, "-");
+    return new Date(normalized);
+  };
+
+  // 검색 + 상태 필터 + 정렬
+  const filteredUsers = useMemo(() => {
+    const keyword = search.trim();
+    let list = [...users];
+
+    // 1) 검색 (이름 기준)
+    if (keyword.length > 0) {
+      list = list.filter((u) =>
+        u.name.toLowerCase().includes(keyword.toLowerCase())
+      );
+    }
+
+    // 2) 상태 필터
+    if (selectedStatus !== "전체") {
+      list = list.filter((u) => u.status === selectedStatus);
+    }
+
+    // 3) 정렬
+    switch (selectedSort) {
+      case "최신 등록순":
+        list.sort(
+          (a, b) =>
+            parseDate(b.joinedAt).getTime() -
+            parseDate(a.joinedAt).getTime()
+        );
+        break;
+      case "오래된 순":
+        list.sort(
+          (a, b) =>
+            parseDate(a.joinedAt).getTime() -
+            parseDate(b.joinedAt).getTime()
+        );
+        break;
+      case "최근 구매순":
+        list.sort((a, b) => b.totalAmount - a.totalAmount);
+        break;
+      case "기본 정렬":
+      default:
+      // 아무것도 안 하면 기존 순서 유지
+    }
+
+    return list;
+  }, [users, search, selectedStatus, selectedSort]);
 
   const openDetail = (user: User) => {
     setSelectedUser(user);
@@ -76,10 +136,25 @@ export default function UsersScreen() {
     setSelectedUser(null);
   };
 
+  const handleUserStatusChange = (updatedUser: UserDetail) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+    );
+
+    setSelectedUser((prev) =>
+      prev && prev.id === updatedUser.id ? updatedUser : prev
+    );
+  };
+
+  const handleSubmitSearch = () => {
+    console.log("검색 실행:", search);
+    // 나중에 서버 검색 붙이면 여기서 API 호출
+  };
+
   const renderUserItem = ({ item }: { item: User }) => (
     <View style={styles.userCard}>
       <View style={styles.userLeft}>
-        <View style={styles.avatar}>
+        <View className="avatar" style={styles.avatar}>
           <Ionicons name="person-outline" size={22} color="#3B82F6" />
         </View>
         <View>
@@ -100,53 +175,16 @@ export default function UsersScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* 검색 영역 */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color="#9CA3AF"
-              style={{ marginRight: 6 }}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="사용자 이름으로 검색"
-              placeholderTextColor="#9CA3AF"
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
-          <TouchableOpacity style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>검색</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 필터 버튼들 */}
-        <View style={styles.filterRow}>
-          {FILTERS.map((f) => {
-            const selected = f === selectedFilter;
-            return (
-              <TouchableOpacity
-                key={f}
-                style={[
-                  styles.filterChip,
-                  selected && styles.filterChipSelected,
-                ]}
-                onPress={() => setSelectedFilter(f)}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    selected && styles.filterChipTextSelected,
-                  ]}
-                >
-                  {f}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {/* 검색 + 드롭다운 헤더 */}
+        <UserSearchHeader
+          search={search}
+          onChangeSearch={setSearch}
+          onSubmitSearch={handleSubmitSearch}
+          selectedSort={selectedSort}
+          onChangeSort={setSelectedSort}
+          selectedStatus={selectedStatus}
+          onChangeStatus={setSelectedStatus}
+        />
 
         {/* 사용자 리스트 */}
         <FlatList
@@ -158,15 +196,12 @@ export default function UsersScreen() {
         />
       </View>
 
-      {/* 상세보기 모달 컴포넌트 */}
+      {/* 상세보기 모달 */}
       <UserDetailModal
         visible={detailVisible}
         user={selectedUser}
         onClose={closeDetail}
-        onEdit={(user) => {
-          // TODO: 나중에 수정 화면으로 이동/상태 관리
-          console.log("edit user", user.id);
-        }}
+        onChangeStatus={handleUserStatusChange}
       />
     </SafeAreaView>
   );
@@ -181,64 +216,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
-  },
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  searchBox: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    paddingVertical: 0,
-  },
-  searchButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#2563EB",
-  },
-  searchButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  filterRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  filterChip: {
-    flex: 1,
-    paddingVertical: 8,
-    marginHorizontal: 3,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterChipSelected: {
-    backgroundColor: "#2563EB1A",
-    borderWidth: 1,
-    borderColor: "#2563EB",
-  },
-  filterChipText: {
-    fontSize: 12,
-    color: "#4B5563",
-  },
-  filterChipTextSelected: {
-    color: "#2563EB",
-    fontWeight: "600",
   },
   userCard: {
     flexDirection: "row",
