@@ -24,7 +24,7 @@ export default function RootLayout() {
 
       <Stack.Screen name="users/index" options={{ title: "사용자 관리" }} />
       <Stack.Screen name="inquiries/index" options={{ title: "문의사항 관리" }} />
-      <Stack.Screen name="stats/index" options={{ title: "통계 관리" }} />
+      <Stack.Screen name="sales/index" options={{ title: "매출 관리" }} />
       <Stack.Screen name="admins/index" options={{ title: "관리자 관리" }} />
     </Stack>
   );

@@ -5,9 +5,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AuthModal from "../app/admins/index";
 
-type MenuKey = "users" | "inquiries" | "stats" | "admins";
+type MenuKey = "users" | "inquiries" | "sales" | "admins";
 
-type MenuPath = "/users" | "/inquiries" | "/stats" | "/admins"
+type MenuPath = "/users" | "/inquiries" | "/sales" | "/admins"
 
 type MenuItem = {
   key: MenuKey;
@@ -34,10 +34,10 @@ export default function AdminDashboardScreen() {
 
     },
     {
-      key: "stats",
+      key: "sales",
       label: "통계 관리",
       icon: "stats-chart-outline",
-      path: "/stats",
+      path: "/sales",
     },
     {
       key: "admins",
@@ -55,8 +55,8 @@ export default function AdminDashboardScreen() {
       case "inquiries":
         router.push("/inquiries");
         break;
-      case "stats":
-        router.push("/stats");
+      case "sales":
+        router.push("/sales");
         break;
       case "admins":
         router.push("/admins");
