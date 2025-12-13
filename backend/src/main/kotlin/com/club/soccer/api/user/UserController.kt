@@ -39,4 +39,7 @@ class UserController(
         val user = userService.getUserById(id)
         return UserResponse.from(user)
     }
+
+    @GetMapping
+    fun getUsers() = userService.getUsers()
 }

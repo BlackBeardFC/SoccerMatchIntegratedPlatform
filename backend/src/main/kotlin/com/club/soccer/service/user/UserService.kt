@@ -33,4 +33,7 @@ class UserService(
 
         return user
     }
+    fun getUsers(): List<UserEntity> {
+        return userRepository.findAll()
+    }
 }

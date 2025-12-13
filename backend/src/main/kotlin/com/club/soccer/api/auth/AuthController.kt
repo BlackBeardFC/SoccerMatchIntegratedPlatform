@@ -19,4 +19,5 @@ class AuthController(
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest): LoginResponse =
         authService.login(request)
+
 }

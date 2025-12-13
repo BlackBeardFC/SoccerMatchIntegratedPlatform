@@ -4,7 +4,7 @@ import com.club.soccer.api.v1.dto.auth.LoginRequest
 import com.club.soccer.api.v1.dto.auth.LoginResponse
 import com.club.soccer.api.v1.dto.auth.SignupRequest
 import com.club.soccer.api.v1.dto.user.UserResponse
-import com.club.soccer.config.jwt.JwtTokenProvider
+import com.club.soccer.config.jwt.JwtProvider
 import com.club.soccer.domain.user.UserEntity
 import com.club.soccer.domain.user.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtTokenProvider: JwtTokenProvider,
+    private val jwtProvider: JwtProvider,
 ) {
 
     @Transactional
@@ -43,7 +43,9 @@ class AuthService(
         )
 
         val saved = userRepository.save(user)
-        val token = jwtTokenProvider.createToken(saved.id, saved.loginId, saved.role)
+
+        // JwtProvider는 createToken(userId: Long) 형태였음
+        val token = jwtProvider.createToken(saved.id!!)
 
         return LoginResponse(
             token = token,
@@ -59,7 +61,7 @@ class AuthService(
             throw IllegalArgumentException("아이디 또는 비밀번호가 잘못되었습니다.")
         }
 
-        val token = jwtTokenProvider.createToken(user.id, user.loginId, user.role)
+        val token = jwtProvider.createToken(user.id!!)
 
         return LoginResponse(
             token = token,
