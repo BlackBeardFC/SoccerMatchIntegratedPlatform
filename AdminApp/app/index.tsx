@@ -3,13 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AuthModal from "../app/admins/index";
 
-type MenuKey = "users" | "inquiries" | "stats" | "admins";
+type MenuKey = "users" | "inquiries" | "sales" | "admins";
+
+type MenuPath = "/users" | "/inquiries" | "/sales" | "/admins"
 
 type MenuItem = {
   key: MenuKey;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+  path: MenuPath;
 };
 
 export default function AdminDashboardScreen() {
@@ -20,21 +24,26 @@ export default function AdminDashboardScreen() {
       key: "users",
       label: "사용자 관리",
       icon: "person-outline",
+      path: "/users",
     },
     {
       key: "inquiries",
       label: "문의사항 관리",
       icon: "help-circle-outline",
+      path: "/inquiries",
+
     },
     {
-      key: "stats",
+      key: "sales",
       label: "통계 관리",
       icon: "stats-chart-outline",
+      path: "/sales",
     },
     {
       key: "admins",
       label: "관리자 관리",
       icon: "person-outline",
+      path: "/admins"
     },
   ];
 
@@ -46,8 +55,8 @@ export default function AdminDashboardScreen() {
       case "inquiries":
         router.push("/inquiries");
         break;
-      case "stats":
-        router.push("/stats");
+      case "sales":
+        router.push("/sales");
         break;
       case "admins":
         router.push("/admins");

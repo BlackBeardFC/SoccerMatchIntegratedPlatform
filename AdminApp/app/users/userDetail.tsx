@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import SanctionModal from "./sanction";
 
 export type UserDetail = {
   id: string;
@@ -11,7 +12,7 @@ export type UserDetail = {
   lastLogin: string;
   totalOrders: number;
   totalAmount: number;
-  status: "활성" | "비활성";
+  status: "활성" | "비활성" | "강제탈퇴";
 };
 
 type Props = {
@@ -19,10 +20,71 @@ type Props = {
   user: UserDetail | null;
   onClose: () => void;
   onEdit?: (user: UserDetail) => void;
+  onChangeStatus?: (user: UserDetail) => void;
 };
 
-const UserDetailModal: React.FC<Props> = ({ visible, user, onClose, onEdit }) => {
-  if (!user) return null;
+const UserDetailModal: React.FC<Props> = ({
+  visible,
+  user,
+  onClose,
+  onEdit,
+  onChangeStatus,
+}) => {
+  const [localUser, setLocalUser] = useState<UserDetail | null>(user);
+  const [isSanctionMode, setIsSanctionMode] = useState(false); // ✅ 제재 모드 여부
+
+  // user가 바뀔 때마다 상세 정보 + 제재 모드 초기화
+  useEffect(() => {
+    setLocalUser(user);
+    setIsSanctionMode(false);
+  }, [user]);
+
+  // 모달이 닫힐 때 제재 모드도 초기화
+  useEffect(() => {
+    if (!visible) {
+      setIsSanctionMode(false);
+    }
+  }, [visible]);
+
+  if (!localUser) return null;
+
+  const handleStatusChange = (newStatus: UserDetail["status"]) => {
+    const updatedUser: UserDetail = {
+      ...localUser,
+      status: newStatus,
+    };
+
+    setLocalUser(updatedUser);
+    onChangeStatus?.(updatedUser);
+    onEdit?.(updatedUser);
+  };
+
+  const getStatusBadgeStyle = () => {
+    switch (localUser.status) {
+      case "활성":
+        return {
+          container: [styles.statusBadge, { backgroundColor: "#DCFCE7" }],
+          text: [styles.statusBadgeText, { color: "#16A34A" }],
+        };
+      case "비활성":
+        return {
+          container: [styles.statusBadge, { backgroundColor: "#FEF3C7" }],
+          text: [styles.statusBadgeText, { color: "#D97706" }],
+        };
+      case "강제탈퇴":
+        return {
+          container: [styles.statusBadge, { backgroundColor: "#FEE2E2" }],
+          text: [styles.statusBadgeText, { color: "#DC2626" }],
+        };
+      default:
+        return {
+          container: styles.statusBadge,
+          text: styles.statusBadgeText,
+        };
+    }
+  };
+
+  const statusStyle = getStatusBadgeStyle();
 
   return (
     <Modal
@@ -35,78 +97,105 @@ const UserDetailModal: React.FC<Props> = ({ visible, user, onClose, onEdit }) =>
         <View style={styles.modalCard}>
           {/* 헤더 */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalTitle}>사용자 상세 정보</Text>
-            <TouchableOpacity onPress={onClose}>
+            <Text style={styles.modalTitle}>
+              {isSanctionMode ? "계정 제재" : "사용자 상세 정보"}
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (isSanctionMode) {
+                  setIsSanctionMode(false); // 제재 모드에서는 뒤로
+                } else {
+                  onClose(); // 기본 상세 화면에서는 닫기
+                }
+              }}
+            >
               <Ionicons name="close" size={22} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
-          {/* 프로필 영역 */}
-          <View style={styles.modalProfileSection}>
-            <View style={styles.modalAvatar}>
-              <Ionicons name="person-outline" size={32} color="#2563EB" />
-            </View>
-            <Text style={styles.modalName}>{user.name}</Text>
+          {/* ✅ 모드에 따라 내용 변경 */}
+          {isSanctionMode ? (
+            // ===== 계정 제재 화면 =====
+            <SanctionModal
+              currentStatus={localUser.status}
+              onClose={() => setIsSanctionMode(false)}
+              onApply={(newStatus) => {
+                handleStatusChange(newStatus);
+                setIsSanctionMode(false);
+              }}
+            />
+          ) : (
+            // ===== 기본 상세 화면 =====
+            <>
+              {/* 프로필 영역 */}
+              <View style={styles.modalProfileSection}>
+                <View style={styles.modalAvatar}>
+                  <Ionicons name="person-outline" size={32} color="#2563EB" />
+                </View>
+                <Text style={styles.modalName}>{localUser.name}</Text>
 
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusBadgeText}>{user.status}</Text>
-            </View>
-          </View>
+                <View style={statusStyle.container}>
+                  <Text style={statusStyle.text}>{localUser.status}</Text>
+                </View>
+              </View>
 
-          {/* 기본 정보 */}
-          <View style={styles.modalSection}>
-            <Text style={styles.modalSectionTitle}>기본 정보</Text>
+              {/* 기본 정보 */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>기본 정보</Text>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>이메일:</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>전화번호:</Text>
-              <Text style={styles.infoValue}>{user.phone}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>가입일:</Text>
-              <Text style={styles.infoValue}>{user.joinedAt}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>최근 로그인:</Text>
-              <Text style={styles.infoValue}>{user.lastLogin}</Text>
-            </View>
-          </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>이메일:</Text>
+                  <Text style={styles.infoValue}>{localUser.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>전화번호:</Text>
+                  <Text style={styles.infoValue}>{localUser.phone}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>가입일:</Text>
+                  <Text style={styles.infoValue}>{localUser.joinedAt}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>최근 로그인:</Text>
+                  <Text style={styles.infoValue}>{localUser.lastLogin}</Text>
+                </View>
+              </View>
 
-          {/* 구매 정보 */}
-          <View style={styles.modalSection}>
-            <Text style={styles.modalSectionTitle}>구매 정보</Text>
+              {/* 구매 정보 */}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>구매 정보</Text>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>총 주문 수:</Text>
-              <Text style={styles.infoValue}>{user.totalOrders}건</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>총 구매 금액:</Text>
-              <Text style={[styles.infoValue, styles.infoValueAccent]}>
-                ₩{user.totalAmount.toLocaleString("ko-KR")}
-              </Text>
-            </View>
-          </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>총 주문 수:</Text>
+                  <Text style={styles.infoValue}>
+                    {localUser.totalOrders}건
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={[styles.infoValue, styles.infoValueAccent]}>
+                    ₩{localUser.totalAmount.toLocaleString("ko-KR")}
+                  </Text>
+                </View>
+              </View>
 
-          {/* 하단 버튼 */}
-          <View style={styles.modalButtonRow}>
-            <TouchableOpacity
-              style={styles.modalSecondaryButton}
-              onPress={onClose}
-            >
-              <Text style={styles.modalSecondaryText}>닫기</Text>
-            </TouchableOpacity>
+              {/* 하단 버튼 */}
+              <View style={styles.modalButtonRow}>
+                <TouchableOpacity
+                  style={styles.modalSecondaryButton}
+                  onPress={onClose}
+                >
+                  <Text style={styles.modalSecondaryText}>닫기</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.modalPrimaryButton}
-              onPress={() => onEdit && onEdit(user)}
-            >
-              <Text style={styles.modalPrimaryText}>수정</Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  style={styles.modalPrimaryButton}
+                  onPress={() => setIsSanctionMode(true)} // ✅ 여기서 제재 모드 ON
+                >
+                  <Text style={styles.modalPrimaryText}>계정 제재</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -205,14 +294,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 8,
     columnGap: 10,
+    justifyContent: "flex-end",   // ★ 오른쪽 정렬
   },
   modalSecondaryButton: {
-    flex: 1,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     backgroundColor: "#F3F4F6",
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -222,10 +312,10 @@ const styles = StyleSheet.create({
     color: "#4B5563",
   },
   modalPrimaryButton: {
-    flex: 1,
     borderRadius: 999,
     backgroundColor: "#2563EB",
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     alignItems: "center",
     justifyContent: "center",
   },
