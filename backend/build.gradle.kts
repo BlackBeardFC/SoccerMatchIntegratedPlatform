@@ -38,6 +38,8 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("org.jsoup:jsoup:1.18.1")
+	implementation("com.auth0:java-jwt:4.4.0")
+	implementation("org.springframework.security:spring-security-crypto")
 
 }
 
