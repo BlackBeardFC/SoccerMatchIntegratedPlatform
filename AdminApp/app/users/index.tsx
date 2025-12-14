@@ -1,11 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import UserDetailModal, { UserDetail } from "../users/userDetail";
@@ -151,31 +145,70 @@ export default function UsersScreen() {
     // 나중에 서버 검색 붙이면 여기서 API 호출
   };
 
+  const statusBadgeStyle = (status: string) => {
+  switch (status) {
+    case "활성":
+      return { backgroundColor: "#DCFCE7" };
+    case "비활성":
+      return { backgroundColor: "#FEF3C7" };
+    case "강제탈퇴":
+      return { backgroundColor: "#FEE2E2" };
+    default:
+      return {};
+  }
+};
+
+const statusTextStyle = (status: string) => {
+  switch (status) {
+    case "활성":
+      return { color: "#16A34A" };
+    case "비활성":
+      return { color: "#D97706" };
+    case "강제탈퇴":
+      return { color: "#DC2626" };
+    default:
+      return {};
+  }
+};
+
+
   const renderUserItem = ({ item }: { item: User }) => (
-    <View style={styles.userCard}>
-      <View style={styles.userLeft}>
-        <View className="avatar" style={styles.avatar}>
-          <Ionicons name="person-outline" size={22} color="#3B82F6" />
-        </View>
-        <View>
-          <Text style={styles.userName}>{item.name}</Text>
-          <Text style={styles.userEmail}>{item.email}</Text>
-        </View>
+  <View style={styles.userCard}>
+    <View style={styles.userLeft}>
+      <View style={styles.avatar}>
+        <Ionicons name="person-outline" size={22} color="#3B82F6" />
       </View>
 
-      <TouchableOpacity
-        style={styles.detailButton}
-        onPress={() => openDetail(item)}
-      >
-        <Text style={styles.detailButtonText}>상세</Text>
-      </TouchableOpacity>
+      <View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <Text style={styles.userName}>{item.name}</Text>
+
+          {/* ✅ 상태 뱃지 */}
+          <View style={[styles.statusBadge, statusBadgeStyle(item.status)]}>
+            <Text style={[styles.statusText, statusTextStyle(item.status)]}>
+              {item.status}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.userEmail}>{item.email}</Text>
+      </View>
     </View>
-  );
+
+    <TouchableOpacity
+      style={styles.detailButton}
+      onPress={() => openDetail(item)}
+    >
+      <Text style={styles.detailButtonText}>상세</Text>
+    </TouchableOpacity>
+  </View>
+);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* 검색 + 드롭다운 헤더 */}
+        <View style={styles.headerLayer}>
         <UserSearchHeader
           search={search}
           onChangeSearch={setSearch}
@@ -185,14 +218,15 @@ export default function UsersScreen() {
           selectedStatus={selectedStatus}
           onChangeStatus={setSelectedStatus}
         />
+        </View>
 
         {/* 사용자 리스트 */}
         <FlatList
           data={filteredUsers}
           keyExtractor={(item) => item.id}
           renderItem={renderUserItem}
-          contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
         />
       </View>
 
@@ -236,6 +270,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
   },
+  headerLayer: {
+    zIndex: 9999,
+    elevation: 9999,  
+  },
+  listLayer: {
+    zIndex: 0,
+    elevation: 0,
+  },
   avatar: {
     width: 40,
     height: 40,
@@ -266,4 +308,27 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     fontWeight: "600",
   },
+  statusBadge: {
+  paddingHorizontal: 8,
+  paddingVertical: 2,
+  borderRadius: 999,
+},
+
+statusText: {
+  fontSize: 11,
+  fontWeight: "600",
+},
+
+statusActive: {
+  backgroundColor: "#DCFCE7", // 초록
+},
+
+statusInactive: {
+  backgroundColor: "#FEF3C7", // 회색
+},
+
+statusBanned: {
+  backgroundColor: "#FEE2E2", // 빨강
+},
+
 });

@@ -1,5 +1,4 @@
-// app/users/search.tsx
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -35,7 +35,9 @@ type Props = {
   onChangeStatus: (status: StatusFilterType) => void;
 };
 
-const UserSearchHeader: React.FC<Props> = ({
+type Anchor = { x: number; y: number; w: number; h: number };
+
+export default function UserSearchHeader({
   search,
   onChangeSearch,
   onSubmitSearch,
@@ -43,18 +45,37 @@ const UserSearchHeader: React.FC<Props> = ({
   onChangeSort,
   selectedStatus,
   onChangeStatus,
-}) => {
-  const [sortOpen, setSortOpen] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
+}: Props) {
+  const statusBtnRef = useRef<View>(null);
+  const sortBtnRef = useRef<View>(null);
 
-  const handleSelectSort = (value: SortType) => {
-    onChangeSort(value);
-    setSortOpen(false);
+  const [open, setOpen] = useState<null | "status" | "sort">(null);
+  const [anchor, setAnchor] = useState<Anchor>({ x: 0, y: 0, w: 0, h: 0 });
+
+  const statusLabel = useMemo(() => {
+    if (!selectedStatus || selectedStatus === "전체") return "카테고리 선택";
+    return selectedStatus;
+  }, [selectedStatus]);
+
+  const sortLabel = useMemo(() => {
+    if (!selectedSort) return "기본 정렬";
+    return selectedSort;
+  }, [selectedSort]);
+
+  const close = () => setOpen(null);
+
+  const openStatus = () => {
+    statusBtnRef.current?.measureInWindow((x, y, w, h) => {
+      setAnchor({ x, y, w, h });
+      setOpen("status");
+    });
   };
 
-  const handleSelectStatus = (value: StatusFilterType) => {
-    onChangeStatus(value);
-    setStatusOpen(false);
+  const openSort = () => {
+    sortBtnRef.current?.measureInWindow((x, y, w, h) => {
+      setAnchor({ x, y, w, h });
+      setOpen("sort");
+    });
   };
 
   return (
@@ -78,134 +99,108 @@ const UserSearchHeader: React.FC<Props> = ({
             returnKeyType="search"
           />
         </View>
+
         <TouchableOpacity style={styles.searchButton} onPress={onSubmitSearch}>
           <Text style={styles.searchButtonText}>검색</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 카테고리/정렬 드롭다운 (좌우 배치) */}
+      {/* 필터 (좌우 배치) */}
       <View style={styles.filterRow}>
-        {/* 좌측: 상태 카테고리 */}
+        {/* 상태 */}
         <TouchableOpacity
+          ref={statusBtnRef}
           style={styles.filterSelect}
-          activeOpacity={0.8}
-          onPress={() => setStatusOpen(true)}
+          activeOpacity={0.85}
+          onPress={() => {
+            if (open === "status") close();
+            else openStatus();
+          }}
         >
-          <Text style={styles.filterSelectText}>
-            {selectedStatus || "카테고리 선택"}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color="#2563EB" />
+          <Text style={styles.filterSelectText}>{statusLabel}</Text>
+          <Ionicons
+            name={open === "status" ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#2563EB"
+          />
         </TouchableOpacity>
 
-        {/* 우측: 정렬 */}
+        {/* 정렬 */}
         <TouchableOpacity
+          ref={sortBtnRef}
           style={styles.filterSelect}
-          activeOpacity={0.8}
-          onPress={() => setSortOpen(true)}
+          activeOpacity={0.85}
+          onPress={() => {
+            if (open === "sort") close();
+            else openSort();
+          }}
         >
-          <Text style={styles.filterSelectText}>
-            {selectedSort || "기본 정렬"}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color="#2563EB" />
+          <Text style={styles.filterSelectText}>{sortLabel}</Text>
+          <Ionicons
+            name={open === "sort" ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#2563EB"
+          />
         </TouchableOpacity>
       </View>
 
-      {/* 상태 드롭다운 모달 */}
+      {/* ✅ 드롭다운: FlatList 영향 안 받게 Modal로 띄움 (버튼 아래에 위치) */}
       <Modal
-        visible={statusOpen}
+        visible={open !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setStatusOpen(false)}
+        onRequestClose={close}
       >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPressOut={() => setStatusOpen(false)}
-        >
-          <View style={styles.dropdownCard}>
-            {STATUS_OPTIONS.map((s) => {
-              const selected = s === selectedStatus;
-              return (
-                <TouchableOpacity
-                  key={s}
-                  style={[
-                    styles.dropdownItem,
-                    selected && styles.dropdownItemSelected,
-                  ]}
-                  onPress={() => handleSelectStatus(s)}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownText,
-                      selected && styles.dropdownTextSelected,
-                    ]}
-                  >
-                    {s}
-                  </Text>
-                  {selected && (
-                    <Ionicons
-                      name="checkmark"
-                      size={16}
-                      color="#2563EB"
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        <Pressable style={styles.modalBackdrop} onPress={close} />
 
-      {/* 정렬 드롭다운 모달 */}
-      <Modal
-        visible={sortOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSortOpen(false)}
-      >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPressOut={() => setSortOpen(false)}
+        <View
+          style={[
+            styles.dropdownCard,
+            {
+              left: anchor.x,
+              top: anchor.y + anchor.h + 8,
+              width: anchor.w,
+            },
+          ]}
         >
-          <View style={styles.dropdownCard}>
-            {SORT_OPTIONS.map((o) => {
-              const selected = o === selectedSort;
-              return (
-                <TouchableOpacity
-                  key={o}
+          {(open === "status" ? STATUS_OPTIONS : SORT_OPTIONS).map((opt) => {
+            const selected =
+              open === "status"
+                ? opt === selectedStatus
+                : opt === selectedSort;
+
+            return (
+              <TouchableOpacity
+                key={opt}
+                style={[
+                  styles.dropdownItem,
+                  selected && styles.dropdownItemSelected,
+                ]}
+                onPress={() => {
+                  if (open === "status") onChangeStatus(opt as StatusFilterType);
+                  else onChangeSort(opt as SortType);
+                  close();
+                }}
+              >
+                <Text
                   style={[
-                    styles.dropdownItem,
-                    selected && styles.dropdownItemSelected,
+                    styles.dropdownText,
+                    selected && styles.dropdownTextSelected,
                   ]}
-                  onPress={() => handleSelectSort(o)}
                 >
-                  <Text
-                    style={[
-                      styles.dropdownText,
-                      selected && styles.dropdownTextSelected,
-                    ]}
-                  >
-                    {o}
-                  </Text>
-                  {selected && (
-                    <Ionicons
-                      name="checkmark"
-                      size={16}
-                      color="#2563EB"
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </TouchableOpacity>
+                  {opt}
+                </Text>
+                {selected && (
+                  <Ionicons name="checkmark" size={16} color="#2563EB" />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </Modal>
     </View>
   );
-};
-
-export default UserSearchHeader;
+}
 
 const styles = StyleSheet.create({
   // 검색 부분
@@ -228,6 +223,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
+    color: "#111827",
   },
   searchButton: {
     paddingHorizontal: 18,
@@ -255,35 +251,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     borderRadius: 999,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   filterSelectText: {
     fontSize: 13,
-    color: "#4B5563",
+    color: "$485563",
+    fontWeight: "400",
   },
 
-  // 드롭다운 모달
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
+  // Modal backdrop
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
   },
+
+  // ✅ 버튼 아래에 뜨는 카드
   dropdownCard: {
-    width: "100%",
+    position: "absolute",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     paddingVertical: 6,
-    paddingHorizontal: 8,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
   },
   dropdownItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    paddingHorizontal: 14,
   },
   dropdownItemSelected: {
     backgroundColor: "#EFF6FF",
