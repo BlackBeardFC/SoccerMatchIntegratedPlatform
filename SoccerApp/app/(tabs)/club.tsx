@@ -85,7 +85,7 @@ export default function ClubTab() {
 
           return (
             <Link
-              href={{ pathname: "/club/[id]", params: { id: item.id } }}
+              href={{ pathname: "../../club/[id]", params: { id: item.id } }}
               asChild
             >
               <Pressable

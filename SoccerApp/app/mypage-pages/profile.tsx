@@ -62,23 +62,6 @@ export default function MyInfoScreen() {
       );
     };
 
-  // const handleDeleteAccount = () => {
-  //   Alert.alert(
-  //     "계정 탈퇴",
-  //     "회원 탈퇴 시 모든 정보가 삭제됩니다.",
-  //     [
-  //       { text: "취소", style: "cancel" },
-  //       {
-  //         text: "탈퇴하기",
-  //         style: "destructive",
-  //         onPress: () => {
-  //           console.log("계정 탈퇴 API 호출 예정");
-  //         },
-  //       },
-  //     ]
-  //   );
-  // };
-
   return (
     <>
       <Stack.Screen
@@ -90,6 +73,7 @@ export default function MyInfoScreen() {
           headerTintColor: "#fff",
           headerShadowVisible: false,
           headerBackVisible: false,
+          contentStyle: { backgroundColor: "#000" },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ padding: 6 }}>
               <Ionicons name="chevron-back" size={22} color="#fff" />

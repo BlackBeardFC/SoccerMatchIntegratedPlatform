@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet, FlatList, Dimensions, Platform } from "react-native";
 import Colors from "../../constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 const rows = [
   { rank: 1,  club: "검은수염", gp: 28, pts: 72, w: 23, d: 3,  l: 2,  gf: 68, ga: 18, gd: 50 },
@@ -72,7 +74,7 @@ function rankBadgeTint(rank: number) {
 
 export default function tabsRank() {
   return (
-    <View style={[styles.container, { paddingHorizontal: P_CONTAINER }]}>
+     <View style={[styles.container, { paddingHorizontal: P_CONTAINER }]}>
       <View style={styles.stickyWrap}>
         <Header />
       </View>
@@ -118,7 +120,7 @@ export default function tabsRank() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0000", paddingTop: 12 },
+  container: { flex: 1, backgroundColor: "#000", paddingTop: 12 },
 
   stickyWrap: {
     position: "static",

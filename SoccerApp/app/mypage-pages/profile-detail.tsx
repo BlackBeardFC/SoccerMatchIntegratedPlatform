@@ -72,6 +72,7 @@ export default function editProfileScreen() {
           headerTintColor: "#fff",
           headerShadowVisible: false,
           headerBackVisible: false,
+          contentStyle: { backgroundColor: "#000" },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ padding: 6 }}>
               <Ionicons name="chevron-back" size={22} color="#fff" />
